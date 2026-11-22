@@ -1,56 +1,95 @@
-# Project Title
+# genome-quality-inspector
 
-[![GitHub license](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](./CONTRIBUTING.md)
+Local-first application for inspecting nucleotide FASTA and FASTQ datasets. The Rust engine computes results from uploaded records; the FastAPI service persists dataset metadata and analysis results; the Next.js interface visualizes those persisted results.
 
-One-line description of what this project does and who it's for.
+This is an initial usable implementation of the project, not yet the full platform described in [`PLAN.md`](./PLAN.md). The supported local workflow is FASTA/FASTQ upload → analysis → dataset inspection → JSON report export. The limitations below are deliberate and visible in the UI.
 
-## Features
+## Supported today
 
-- Feature one
-- Feature two
-- Feature three
+- FASTA (`.fa`, `.fasta`, `.fna`, `.ffn`) and FASTQ (`.fq`, `.fastq`), including gzip-compressed files.
+- Single and multi-file uploads, allowlisted local-path and HTTPS URL imports, dataset tags, and selected OpenGenome2 FASTA or bounded JSONL portion imports.
+- Sequence counts, composition, IUPAC ambiguity, low-complexity entropy regions, duplicate IDs, exact and reverse-complement duplicate counts, k-mer counts, length percentiles, and GC/length histograms.
+- FASTQ Phred+33 summaries, per-position mean quality, per-cycle base counts, and Q20/Q30 percentages; FASTA quality metrics are not applicable.
+- Assembly N50/N75/N90, L50/L75/L90, and Nx curves only when the user explicitly selects `genome_assembly`. These are contiguity statistics, not completeness estimates.
+- Configurable findings with acknowledgement/dismissal, saved comparisons, bounded sequence windows, and taxonomy summaries from user-supplied CSV/TSV mappings.
+- Metadata-only NCBI genome search through the optional NCBI Datasets CLI and GTDB release discovery. These integrations do not download genome collections.
+- SQLite for a zero-setup local run; PostgreSQL through `DATABASE_URL`; Alembic schema migration; optional RQ/Redis queue; paginated API results; sequence ID filtering; JSON report export.
+- Immutable analysis run history with saved k-mer configuration, software version in result payloads, versioned `/api/v1` routes, readiness/capability checks, and Server-Sent Events for run state.
 
-## Getting Started
+## Requirements
 
-### Prerequisites
+- Rust toolchain and Cargo.
+- Python 3.11 or newer and `uv`.
+- Node.js and `pnpm`.
+- Optional: Docker Compose for PostgreSQL and Redis.
 
-List anything the user needs to have installed before they can use this project.
+## Run locally
 
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/username/repo-name.git
-cd repo-name
-
-# Install dependencies
-# add your install command here
-```
-
-### Usage
+From the repository root, in separate terminals:
 
 ```bash
-# Add your run command here
+# Build the analysis engine once
+cargo build --release --locked --manifest-path crates/gqi-engine/Cargo.toml
+
+# Prepare and start the API
+cd apps/api
+uv sync --locked
+uv run alembic upgrade head
+GQI_ENGINE=../../crates/gqi-engine/target/release/gqi-engine uv run uvicorn gqi_api.main:app --reload --port 8000
+
+# Start the web app
+cd ../web
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-## Contributing
+Open http://localhost:3000. Uploaded data is stored under repository `data/` by default. Set `GQI_DATA_DIR` to change the directory and `GQI_MAX_UPLOAD_BYTES` to change the upload limit (default 5 GiB). Set `NEXT_PUBLIC_API_URL` when the API is not at `http://localhost:8000`.
 
-We'd love to accept your patches and contributions to this project. There are just a few guidelines you need to follow.
+For a one-command engine invocation:
 
-### [Code of Conduct](./CODE_OF_CONDUCT.md)
+```bash
+cargo run --release --locked --manifest-path crates/gqi-engine/Cargo.toml -- sample.fasta --dataset-type genome_assembly --k 21
+```
 
-This project follows the [Contributor Covenant](https://www.contributor-covenant.org/) as its Code of Conduct, and we expect all project participants to adhere to it. Kindly read the [full guide](./CODE_OF_CONDUCT.md) to understand what actions will not be tolerated.
+The CLI prints one JSON analysis document to stdout. `--dataset-type` accepts `sequence_collection`, `raw_reads`, `genome_assembly`, `reference_genome`, `training_corpus`, or `unknown`.
 
-### [Contributing Guide](./CONTRIBUTING.md)
+## PostgreSQL and RQ
 
-Read our [contributing guide](./CONTRIBUTING.md) to learn about our development process, how to propose bug fixes and improvements, and how to build and test your changes to the project.
+Use a PostgreSQL SQLAlchemy URL such as `postgresql+psycopg://user:password@localhost:5432/gqi`, then run `uv run alembic upgrade head` before starting the API. SQLite is the default and needs no credentials.
 
-### Issues
+To use durable background jobs, set `GQI_REDIS_URL=redis://localhost:6379/0` for the API and start a worker from `apps/api`:
 
-Feel free to submit issues and enhancement requests. Use the template provided when creating an issue to ensure your request is clear and actionable.
+```bash
+uv run rq worker gqi-analysis
+```
 
-See the open issues for a complete list of proposed features (and known issues).
+Without `GQI_REDIS_URL`, the local API uses a background thread for convenience. That fallback is not durable across process restarts. For local development, `docker compose up -d` starts PostgreSQL and Redis; set the corresponding environment variables before launching API and worker processes.
 
-## [License](./LICENSE)
+## API
 
-This project is licensed under the [MIT License](./LICENSE), meaning that you're free to modify, distribute, and/or use it for any commercial or private project.
+- `GET /api/health`
+- `GET /api/datasets?q=&offset=&limit=`
+- `POST /api/datasets` (multipart `file`; optional `name`, `description`, `dataset_type`)
+- `GET`, `PATCH`, `DELETE /api/datasets/{id}`
+- `POST /api/datasets/{id}/analysis`
+- `GET /api/datasets/{id}/sequences?q=&min_length=&max_length=&offset=&limit=`
+- `GET /api/datasets/{id}/report`
+- Interactive OpenAPI documentation at http://localhost:8000/docs
+
+## Validation
+
+```bash
+cargo fmt --manifest-path crates/gqi-engine/Cargo.toml --check
+cargo test --locked --manifest-path crates/gqi-engine/Cargo.toml
+cargo clippy --locked --manifest-path crates/gqi-engine/Cargo.toml --all-targets -- -D warnings
+cd apps/api && uv run pytest && uv run ruff check gqi_api tests migrations && uv run mypy gqi_api
+cd apps/web && pnpm exec tsc --noEmit && pnpm lint && pnpm build
+```
+
+## Scientific limits and roadmap
+
+Read [`docs/scientific-limitations.md`](docs/scientific-limitations.md), [`docs/metrics.md`](docs/metrics.md), and [`docs/architecture.md`](docs/architecture.md). OpenGenome2 portion imports and limits are described in [`docs/opengenome2.md`](docs/opengenome2.md). Still missing are automated GTDB taxonomy ingestion/classification, NCBI reference sequence import/comparison, BUSCO/CheckM2 execution, near-duplicate matching, disk-backed streaming analytics, Parquet/DuckDB/object storage, multi-user authentication, and advanced report formats. QUAST execution is available for uploaded assembly FASTA when the optional CLI is installed. The engine still materializes sequence records and results in memory; use manageable inputs. Do not infer completeness, taxonomy, coverage, or reference consistency from generic statistics.
+
+## License
+
+MIT. Input data remains under the user's control; review the upstream dataset license and attribution terms before importing or redistributing third-party data.
