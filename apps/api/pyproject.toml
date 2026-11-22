@@ -1,0 +1,40 @@
+[project]
+name = "genome-quality-inspector-api"
+version = "0.1.0"
+description = "API for local genomic sequence quality inspection"
+authors = [
+    { name = "ranajahanzaib", email = "work@withrana.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.20.1",
+    "biopython>=1.88",
+    "fastapi>=0.165.0",
+    "huggingface-hub>=2.4.0",
+    "psycopg[binary]>=3.3.9",
+    "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.34",
+    "redis>=8.1.0",
+    "rq>=3.0.0",
+    "sqlalchemy>=2.1.9",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.2",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

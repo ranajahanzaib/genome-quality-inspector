@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: gqi
+      POSTGRES_USER: gqi
+      POSTGRES_PASSWORD: local-development-only
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gqi -d gqi"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+volumes:
+  postgres-data:
+  redis-data:
