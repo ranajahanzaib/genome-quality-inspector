@@ -16,7 +16,7 @@ Browser → Next.js UI → FastAPI → SQLite/PostgreSQL
 
 SQLite is the zero-setup default. Set `DATABASE_URL` to a PostgreSQL SQLAlchemy URL and apply the Alembic migration for shared local development. Set `GQI_REDIS_URL` on the API and run an RQ worker for durable queue processing. Without Redis, analysis runs in a daemon thread and is lost if the API exits during a job.
 
-The result JSON currently lives in a text column. The project does not yet use Parquet, DuckDB, object storage, event streaming, or a separate worker service in the default run. The parser currently retains sequence data and result rows in memory; split large inputs into manageable files.
+Analysis results are stored as JSON in a database text column. The default deployment does not use Parquet, DuckDB, object storage, event streaming, or a separate worker service. The parser retains sequence data and result rows in memory; use input files sized for the available memory.
 
 ## Source layout
 

@@ -8,4 +8,4 @@
 6. The API saves the result on the run and as the dataset's latest result, then sets their states to `complete`, or records an actionable error and sets both to `failed`.
 7. The web client polls dataset listing and displays persisted results.
 
-Current states include `uploaded`, `queued`, `running`, `complete`, and `failed`. The SSE endpoint streams state changes but not stage percentages. Cancellation, per-stage progress, and retry policies are not yet implemented.
+Run states are `uploaded`, `queued`, `running`, `complete`, and `failed`. The SSE endpoint streams state changes without stage percentages. Runs cannot currently be cancelled, report per-stage progress, or retry automatically.

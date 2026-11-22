@@ -1,46 +1,41 @@
-## Contributing
+# Contributing
 
-We welcome contributions of all kinds to improve this project! Here's how you can get involved:
+Contributions that improve the analyzer, API, interface, or documentation are welcome. For a substantial change, open an issue first to discuss its scope.
 
-1. **Fork the Repository**: Start by forking the repository to your GitHub account.
+## Development setup
 
-2. **Clone Your Fork**: Clone the forked repository to your local machine:
+Install the tools listed in the [root README](README.md#requirements), then follow its [local setup](README.md#run-locally). Keep changes focused and include tests for behavior changes.
 
-   ```bash
-   git clone <repo_url>
-   cd repo_dir
-   ```
+## Validation
 
-3. **Create a Branch**: Create a new branch for your feature or bug fix:
+Run the checks for the components you change:
 
-   ```bash
-   git checkout -b feature-name
-   ```
+```bash
+cargo fmt --manifest-path crates/gqi-engine/Cargo.toml --check
+cargo test --locked --manifest-path crates/gqi-engine/Cargo.toml
+cargo clippy --locked --manifest-path crates/gqi-engine/Cargo.toml --all-targets -- -D warnings
+```
 
-4. **Make Changes**: Make your changes to the codebase. Be sure to follow existing code style and conventions.
+From `apps/api`:
 
-5. **Commit Changes**: Commit your changes with a clear and descriptive message:
+```bash
+uv run pytest
+uv run ruff check gqi_api tests migrations
+uv run mypy gqi_api
+```
 
-   ```bash
-   git commit -m "Add detailed description of the changes"
-   ```
+From `apps/web`:
 
-6. **Push Changes**: Push your changes to your fork:
+```bash
+pnpm exec tsc --noEmit
+pnpm lint
+pnpm build
+```
 
-   ```bash
-   git push origin feature-name
-   ```
+## Pull requests
 
-7. **Submit a Pull Request**: Open a pull request from your branch to the main repository's branch. Include a detailed description of your changes and the problem they solve.
+Describe the problem and the change, list the checks you ran, and call out user-visible or compatibility changes. Update the documentation when behavior, setup, or supported inputs change.
 
-8. **Review and Feedback**: Participate in the review process. Make any requested changes, and your contribution will be merged!
+## Issues
 
-### Guidelines
-
-- Ensure your code follows the existing style and conventions.
-- Include tests for any new functionality or bug fixes.
-- Write clear, concise commit messages and pull request descriptions.
-
-### Issues
-
-Feel free to report bugs or suggest enhancements by creating an issue. Be sure to include detailed information about the problem and, if possible, steps to reproduce it.
+Use the repository issue templates for bug reports and feature requests. Do not include private sequence data, access tokens, or other credentials in an issue; report vulnerabilities using the process in [SECURITY.md](.github/SECURITY.md).

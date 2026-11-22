@@ -8,6 +8,7 @@
 | `GQI_MAX_UPLOAD_BYTES`                      | 5 GiB                                    | Maximum bytes accepted per upload.                                           |
 | `GQI_ANALYSIS_TIMEOUT`                      | 3600 seconds                             | Rust process / RQ job timeout.                                               |
 | `GQI_REDIS_URL`                             | unset                                    | Enables Redis/RQ queue mode.                                                 |
+| `POSTGRES_PASSWORD`                         | unset                                    | Required by Docker Compose for the local PostgreSQL service.                 |
 | `GQI_CORS_ORIGINS`                          | `http://localhost:3000`                  | Comma-separated browser origins.                                             |
 | `NEXT_PUBLIC_API_URL`                       | `http://localhost:8000`                  | API URL used by the frontend browser.                                        |
 | `GQI_LOCAL_IMPORT_DIRS`                     | unset                                    | Platform-separated local path import roots; imports are disabled when unset. |

@@ -1,3 +1,3 @@
 # Genome Quality Inspector web client
 
-Next.js App Router UI for the local genome-quality-inspector API. Run from this directory with `pnpm install --frozen-lockfile` and `pnpm dev`. The client calls `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`). See the repository root README for the complete local setup, analysis engine, validation, and current scientific scope.
+Next.js App Router interface for Genome Quality Inspector. Start the API and analysis engine using the [repository setup guide](../../README.md#run-locally), then run `pnpm install --frozen-lockfile` and `pnpm dev` from this directory. The client calls `NEXT_PUBLIC_API_URL`, which defaults to `http://localhost:8000`. See the root README for supported workflows and scientific scope.

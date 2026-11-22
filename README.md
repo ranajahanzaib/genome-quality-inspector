@@ -2,7 +2,7 @@
 
 Local-first application for inspecting nucleotide FASTA and FASTQ datasets. The Rust engine computes results from uploaded records; the FastAPI service persists dataset metadata and analysis results; the Next.js interface visualizes those persisted results.
 
-This is an initial usable implementation of the project, not yet the full platform described in [`PLAN.md`](./PLAN.md). The supported local workflow is FASTA/FASTQ upload → analysis → dataset inspection → JSON report export. The limitations below are deliberate and visible in the UI.
+The supported workflow is FASTA/FASTQ import, analysis, dataset inspection, comparison, and JSON report export. See [scientific limitations](docs/scientific-limitations.md) for the tool's interpretation boundaries.
 
 ## Supported today
 
@@ -15,6 +15,20 @@ This is an initial usable implementation of the project, not yet the full platfo
 - Metadata-only NCBI genome search through the optional NCBI Datasets CLI and GTDB release discovery. These integrations do not download genome collections.
 - SQLite for a zero-setup local run; PostgreSQL through `DATABASE_URL`; Alembic schema migration; optional RQ/Redis queue; paginated API results; sequence ID filtering; JSON report export.
 - Immutable analysis run history with saved k-mer configuration, software version in result payloads, versioned `/api/v1` routes, readiness/capability checks, and Server-Sent Events for run state.
+
+## Built-in demo
+
+The web app includes three bundled **synthetic** fixtures. Start the API and web app using the instructions below, then choose **Load sample datasets** on the empty workspace. The Rust engine analyzes the fixture records; the UI labels them synthetic so their metrics are not mistaken for biological observations.
+
+The bundled fixtures produce these results:
+
+| Fixture                     | Records | Bases | Example metrics                         |
+| --------------------------- | ------: | ----: | --------------------------------------- |
+| Sequence collection (FASTA) |       8 | 1,208 | GC 49.33%; 1 exact duplicate            |
+| Read quality (FASTQ)        |       4 |    67 | Mean Phred 30.0; Q20 92.54%; Q30 62.69% |
+| Assembly (FASTA)            |       5 | 1,074 | GC 54.75%; N50 320 bp                   |
+
+These values are calculated from the bundled files in [`apps/api/fixtures/demo/`](apps/api/fixtures/demo/). The fixtures make the analysis views explorable without importing external data.
 
 ## Requirements
 
@@ -55,7 +69,7 @@ The CLI prints one JSON analysis document to stdout. `--dataset-type` accepts `s
 
 ## PostgreSQL and RQ
 
-Use a PostgreSQL SQLAlchemy URL such as `postgresql+psycopg://user:password@localhost:5432/gqi`, then run `uv run alembic upgrade head` before starting the API. SQLite is the default and needs no credentials.
+For PostgreSQL, copy `.env.example` to `.env` in the repository root, set `POSTGRES_PASSWORD` to a local password, then run `docker compose up -d`. Configure `DATABASE_URL` as `postgresql+psycopg://gqi:${POSTGRES_PASSWORD}@localhost:5432/gqi` and run `uv run alembic upgrade head` from `apps/api`. SQLite is the default and needs no credentials.
 
 To use durable background jobs, set `GQI_REDIS_URL=redis://localhost:6379/0` for the API and start a worker from `apps/api`:
 
@@ -83,12 +97,12 @@ cargo fmt --manifest-path crates/gqi-engine/Cargo.toml --check
 cargo test --locked --manifest-path crates/gqi-engine/Cargo.toml
 cargo clippy --locked --manifest-path crates/gqi-engine/Cargo.toml --all-targets -- -D warnings
 cd apps/api && uv run pytest && uv run ruff check gqi_api tests migrations && uv run mypy gqi_api
-cd apps/web && pnpm exec tsc --noEmit && pnpm lint && pnpm build
+cd ../web && pnpm exec tsc --noEmit && pnpm lint && pnpm build
 ```
 
-## Scientific limits and roadmap
+## Current scope and limitations
 
-Read [`docs/scientific-limitations.md`](docs/scientific-limitations.md), [`docs/metrics.md`](docs/metrics.md), and [`docs/architecture.md`](docs/architecture.md). OpenGenome2 portion imports and limits are described in [`docs/opengenome2.md`](docs/opengenome2.md). Still missing are automated GTDB taxonomy ingestion/classification, NCBI reference sequence import/comparison, BUSCO/CheckM2 execution, near-duplicate matching, disk-backed streaming analytics, Parquet/DuckDB/object storage, multi-user authentication, and advanced report formats. QUAST execution is available for uploaded assembly FASTA when the optional CLI is installed. The engine still materializes sequence records and results in memory; use manageable inputs. Do not infer completeness, taxonomy, coverage, or reference consistency from generic statistics.
+Read [`docs/scientific-limitations.md`](docs/scientific-limitations.md), [`docs/metrics.md`](docs/metrics.md), and [`docs/architecture.md`](docs/architecture.md) for supported metrics, architecture, and interpretation boundaries. OpenGenome2 import behavior is described in [`docs/opengenome2.md`](docs/opengenome2.md). Automated GTDB taxonomy classification, NCBI reference-sequence comparison, BUSCO/CheckM2 execution, near-duplicate matching, disk-backed analytics, multi-user authentication, and advanced report formats are not supported. QUAST can analyze uploaded assembly FASTA when its optional CLI is installed. The engine retains sequence records and results in memory, so use input sizes appropriate for the available memory. Generic sequence statistics do not establish completeness, taxonomy, coverage, or reference consistency.
 
 ## License
 

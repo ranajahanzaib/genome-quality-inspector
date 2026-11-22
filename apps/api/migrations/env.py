@@ -19,14 +19,12 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from gqi_api.main import Base
+from gqi_api.main import DATABASE_URL, Base
 
 target_metadata = Base.metadata
 config.set_main_option(
     "sqlalchemy.url",
-    os.environ.get("DATABASE_URL", "sqlite:///../../data/gqi.sqlite3").replace(
-        "%", "%%"
-    ),
+    DATABASE_URL.replace("%", "%%"),
 )
 
 # other values from the config, defined by the needs of env.py,

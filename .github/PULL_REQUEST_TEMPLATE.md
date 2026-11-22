@@ -1,10 +1,12 @@
-Fixes #<issue_number_goes_here>
+## Summary
 
-> It's a good idea to open an issue first for discussion.
+Describe the problem and the change.
 
-**Description**
-A brief summary of what this PR does and why.
+## Verification
 
-- [ ] Tests pass
-- [ ] README updated if needed
-- [ ] No breaking changes (or described below)
+- [ ] Tests and checks for changed components pass.
+- [ ] Documentation is updated where needed.
+
+## Compatibility
+
+Describe any user-visible changes, migration steps, or compatibility impact.
