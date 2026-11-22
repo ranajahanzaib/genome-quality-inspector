@@ -28,6 +28,17 @@ def test_health_reports_database():
     assert client.get("/api/v1/capabilities").status_code == 200
 
 
+def test_cors_headers_for_local_origins():
+    response = client.options(
+        "/api/health",
+        headers={
+            "Origin": "http://127.0.0.1:3008",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:3008"
+
+
 def test_upload_fasta_registers_real_file():
     response = client.post(
         "/api/datasets",

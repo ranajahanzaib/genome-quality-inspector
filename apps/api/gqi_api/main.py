@@ -251,10 +251,19 @@ app = FastAPI(
     version="0.1.0",
     description="Local nucleotide dataset auditing API",
 )
+cors_origins = [
+    o.strip()
+    for o in os.environ.get(
+        "GQI_CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3008,http://127.0.0.1:3008",
+    ).split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("GQI_CORS_ORIGINS", "http://localhost:3000").split(
-        ","
+    allow_origins=cors_origins,
+    allow_origin_regex=os.environ.get(
+        "GQI_CORS_REGEX", r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$"
     ),
     allow_methods=["*"],
     allow_headers=["*"],
