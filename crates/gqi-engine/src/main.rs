@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Parser;
 use flate2::read::MultiGzDecoder;
 use serde::Serialize;
@@ -766,14 +766,18 @@ mod tests {
                 .1,
             4
         );
-        assert!(result
-            .kmer_spectrum
-            .iter()
-            .any(|(abundance, _)| *abundance == 4));
-        assert!(result
-            .kmer_gc_heatmap
-            .iter()
-            .any(|(gc, abundance, _)| *gc == 1 && *abundance == 4));
+        assert!(
+            result
+                .kmer_spectrum
+                .iter()
+                .any(|(abundance, _)| *abundance == 4)
+        );
+        assert!(
+            result
+                .kmer_gc_heatmap
+                .iter()
+                .any(|(gc, abundance, _)| *gc == 1 && *abundance == 4)
+        );
     }
 
     #[test]
